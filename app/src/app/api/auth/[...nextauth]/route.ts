@@ -1,6 +1,5 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-
 export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
@@ -78,6 +77,9 @@ export const authOptions: AuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      return true; // For credentials provider
+    },
     async jwt({ token, user, trigger, session }) {
       if (trigger === "update" && session?.preferences) {
         token.preferences = session.preferences;

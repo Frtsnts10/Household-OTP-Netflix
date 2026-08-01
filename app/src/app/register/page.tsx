@@ -201,7 +201,7 @@ export default function RegisterPage() {
                 {isLoading ? "Memproses..." : "Daftar Akun"}
               </Button>
 
-              <div className="text-center mt-2">
+              <div className="text-center mt-4">
                 <Link href="/login" className="text-sm text-neutral-400 hover:text-white transition-colors">
                   Sudah punya akun? <span className="text-red-500 hover:underline">Masuk di sini</span>
                 </Link>

@@ -170,7 +170,7 @@ function LoginContent() {
               </Button>
 
               {!show2FA && (
-                <div className="text-center mt-2">
+                <div className="text-center mt-4">
                   <Link href="/register" className="text-sm text-neutral-400 hover:text-white transition-colors">
                     Belum punya akun? <span className="text-red-500 hover:underline">Daftar di sini</span>
                   </Link>
