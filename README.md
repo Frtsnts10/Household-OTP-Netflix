@@ -1,38 +1,38 @@
 # Household OTP Center
 
-Pusat manajemen kode akses dan link verifikasi Netflix yang tersinkronisasi secara real-time. Proyek ini dibangun dengan Node.js (Express + SQLite) untuk *backend services* dan Next.js (HeroUI + Tailwind CSS) untuk *frontend app*.
+A centralized, real-time synchronization center for Netflix access codes and verification links. This project is built using Node.js (Express + SQLite) for backend services and Next.js (HeroUI + Tailwind CSS) for the frontend app.
 
-## Fitur Utama
-- **Multi-Email Support**: Bisa membaca OTP dari banyak akun email sekaligus.
-- **Custom IMAP Domain**: Mendukung berbagai provider email dengan port custom (misal: `mail.alflix.id`).
-- **Responsive & Modern UI**: Tampilan dioptimalkan secara rapi untuk Desktop, Tablet, dan Mobile.
-- **Auto-Parsing**: Membaca format text biasa maupun link verifikasi kompleks dengan sangat baik.
+## Key Features
+- **Multi-Email Support**: Read OTPs from multiple email accounts simultaneously.
+- **Custom IMAP Domain**: Support for various email providers with custom ports (e.g., `mail.alflix.id`).
+- **Responsive & Modern UI**: Layout optimized beautifully for Desktop, Tablet, and Mobile screens.
+- **Auto-Parsing**: Seamlessly reads both plain text formats and complex verification links.
 
-## Struktur Proyek
+## Project Structure
 
-- **/app**: Aplikasi antarmuka Next.js dengan desain yang modern dan responsif.
-- **/services**: *Backend service* Express.js yang secara otomatis melakukan *polling* email via IMAP untuk membaca OTP terbaru.
+- **/app**: A Next.js frontend application featuring a modern and responsive design.
+- **/services**: An Express.js backend service that automatically polls emails via IMAP to fetch the latest OTPs.
 
-## Persyaratan
+## Prerequisites
 - Node.js (v18+)
 - NPM
 
-## Instalasi
+## Installation
 
-Instal semua dependensi (untuk `app` dan `services`) sekaligus dari direktori utama:
+Install all dependencies (for both `app` and `services`) at once from the root directory:
 ```bash
 npm run install:all
 ```
 
-## Konfigurasi Variabel Lingkungan (.env)
+## Environment Variables Configuration (.env)
 
-1. Buka folder `services`.
-2. Salin file `.env.example` menjadi `.env`.
-3. Isi kredensial IMAP email Anda. Pastikan Anda menggunakan *App Password* jika menggunakan Gmail.
+1. Open the `services` folder.
+2. Copy the `.env.example` file and rename it to `.env`.
+3. Fill in your IMAP email credentials. Make sure to use an *App Password* if you are using Gmail or custom domain providers.
 
-## Menjalankan Aplikasi
+## Running the Application
 
-Jalankan kedua perintah berikut di dua terminal/tab yang terpisah di root proyek:
+Run the following two commands in two separate terminal tabs from the project root:
 
 **Terminal 1 (Backend Services):**
 ```bash
@@ -44,4 +44,4 @@ npm run dev:services
 npm run dev:app
 ```
 
-Buka `http://localhost:3000` di browser Anda untuk melihat aplikasi yang sedang berjalan.
+Open `http://localhost:3000` in your browser to view the running application.
