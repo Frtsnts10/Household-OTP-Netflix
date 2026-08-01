@@ -16,29 +16,53 @@ export const authOptions: AuthOptions = {
         if (!username || !password) return null;
 
         try {
-          const res = await fetch("http://localhost:5001/api/users/login", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-api-key": process.env.BACKEND_API_KEY || ""
-            },
-            body: JSON.stringify({ username, password, twoFactorToken })
-          });
+          const { adminDb } = await import('@/lib/firebaseAdmin');
+          const bcrypt = await import('bcryptjs');
 
-          if (!res.ok) {
-            const errData = await res.json();
-            throw new Error(errData.error || "Login failed");
+          const usersRef = adminDb.collection('householdotp_users');
+          const snapshot = await usersRef.where('username', '==', username).get();
+
+          if (snapshot.empty) {
+            throw new Error("Username atau password salah");
           }
 
-          const user = await res.json();
+          let userDoc: any = undefined;
+          snapshot.forEach((doc: any) => { userDoc = { id: doc.id, ...doc.data() }; });
+
+          if (!userDoc) {
+            throw new Error("Username atau password salah");
+          }
+
+          const isValid = await bcrypt.compare(password, userDoc.password);
+          if (!isValid) {
+            throw new Error("Username atau password salah");
+          }
+
+          // 2FA Check
+          if (userDoc.two_factor_enabled && userDoc.two_factor_secret) {
+            if (!twoFactorToken) {
+              throw new Error("2FA_REQUIRED");
+            }
+            const speakeasy = await import('speakeasy');
+            const is2faValid = speakeasy.totp.verify({
+                secret: userDoc.two_factor_secret,
+                encoding: 'base32',
+                token: twoFactorToken,
+                window: 1
+            });
+            if (!is2faValid) {
+               throw new Error("Kode 2FA tidak valid");
+            }
+          }
+
           return { 
-            id: user.id, 
-            name: user.name, 
-            role: user.role, 
-            username: user.username,
-            household_only: user.household_only,
-            preferences: user.preferences,
-            two_factor_enabled: user.two_factor_enabled
+            id: userDoc.id, 
+            name: userDoc.name, 
+            role: userDoc.role, 
+            username: userDoc.username,
+            household_only: userDoc.household_only,
+            preferences: userDoc.preferences,
+            two_factor_enabled: userDoc.two_factor_enabled
           };
         } catch (error: any) {
           console.error("Login error:", error);

@@ -1,47 +1,72 @@
 # Household OTP Center
+# Household OTP (Firebase Edition)
 
-A centralized, real-time synchronization center for Netflix access codes and verification links. This project is built using Node.js (Express + SQLite) for backend services and Next.js (HeroUI + Tailwind CSS) for the frontend app.
+Aplikasi pintar untuk menangkap OTP Netflix dari Email (IMAP) secara otomatis dan menampilkannya di Dashboard Web.
+Versi ini telah di-upgrade ke Arsitektur **Full Serverless** menggunakan Next.js App Router dan Firebase.
 
-## Key Features
-- **Multi-Email Support**: Read OTPs from multiple email accounts simultaneously.
-- **Custom IMAP Domain**: Support for various email providers with custom ports (e.g., `mail.alflix.id`).
-- **Responsive & Modern UI**: Layout optimized beautifully for Desktop, Tablet, and Mobile screens.
-- **Auto-Parsing**: Seamlessly reads both plain text formats and complex verification links.
+## 🚀 Fitur Utama
+1. **Cron Job Otomatis:** Menarik email dari Netflix setiap 1 menit via IMAP (Cloud Scheduler).
+2. **Dashboard Real-time:** Menampilkan OTP langsung dari Firestore.
+3. **Multi-User (Role-Based):** Dukungan admin dan user biasa (Household Only).
+4. **Keamanan Ekstra:** Login menggunakan 2FA (Google Authenticator).
+5. **Zero Maintenance Server:** Menggunakan Firebase dan Vercel (Gratis).
 
-## Project Structure
+---
 
-- **/app**: A Next.js frontend application featuring a modern and responsive design.
-- **/services**: An Express.js backend service that automatically polls emails via IMAP to fetch the latest OTPs.
+## 🛠️ Persiapan & Instalasi
 
-## Prerequisites
-- Node.js (v18+)
-- NPM
-
-## Installation
-
-Install all dependencies (for both `app` and `services`) at once from the root directory:
+### 1. Kloning & Install
 ```bash
+git clone https://github.com/Frtsnts10/Household-OTP-Netflix.git
+cd Household-OTP-Netflix
 npm run install:all
 ```
 
-## Environment Variables Configuration (.env)
+### 2. Setup Firebase (Wajib)
+Aplikasi ini membutuhkan proyek Firebase pada **Paket Blaze** (Pay as you go).
+1. Buat proyek di [Firebase Console](https://console.firebase.google.com).
+2. Aktifkan **Firestore Database**.
+3. *Upgrade* ke paket Blaze (Gratis hingga batas wajar).
 
-1. Open the `services` folder.
-2. Copy the `.env.example` file and rename it to `.env`.
-3. Fill in your IMAP email credentials. Make sure to use an *App Password* if you are using Gmail or custom domain providers.
+#### Konfigurasi Frontend (Web)
+Buat file `app/.env` dan masukkan data rahasia berikut:
+```env
+NEXTAUTH_SECRET=RahasiaSuperAman123!
+NEXTAUTH_URL=http://localhost:3001
 
-## Running the Application
-
-Run the following two commands in two separate terminal tabs from the project root:
-
-**Terminal 1 (Backend Services):**
-```bash
-npm run dev:services
+# Firebase Client Configuration (Didapat dari Project Settings -> Web App)
+NEXT_PUBLIC_FIREBASE_API_KEY="..."
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="..."
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="..."
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="..."
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="..."
+NEXT_PUBLIC_FIREBASE_APP_ID="..."
 ```
 
-**Terminal 2 (Frontend App):**
+#### Setup Firebase CLI & Deploy Backend
+Untuk menjalankan Cron Job penarik OTP, Anda harus men-*deploy* foldernya ke Cloud Functions:
 ```bash
-npm run dev:app
+firebase login
+firebase init functions # (pilih proyek Anda)
+npm run deploy --prefix functions
 ```
 
-Open `http://localhost:3000` in your browser to view the running application.
+---
+
+## 💻 Menjalankan Secara Lokal (Development)
+
+Untuk mengembangkan aplikasi di komputer Anda:
+```bash
+npm run dev
+```
+Buka browser di `http://localhost:3001`. Anda bisa mendaftar (Register) langsung dari web.
+
+---
+
+## 🌍 Cara Deploy ke Vercel (Produksi)
+
+Bagian antarmuka pengguna (Frontend) 100% kompatibel dengan Vercel.
+1. Hubungkan repository GitHub ini ke Vercel.
+2. Atur **Root Directory** ke `app`.
+3. Salin semua Environment Variables dari `app/.env` ke dalam pengaturan Vercel.
+4. Deploy! Aplikasi Anda sudah *online* 24 jam tanpa perlu memikirkan VPS.
