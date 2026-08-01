@@ -11,3 +11,7 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 services/database.sqlite
+services/database.sqlite-journal
+services/database.sqlite-wal
+.env*
+!.env.example
