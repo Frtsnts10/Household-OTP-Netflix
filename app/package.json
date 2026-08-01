@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@heroui/react": "^3.2.1",
+    "@heroui/react": "^2.4.28",
     "@heroui/system": "^2.4.28",
     "@heroui/theme": "^2.4.26",
     "date-fns": "^4.4.0",

@@ -71,6 +71,8 @@ const checkEmailAccount = async (email, password, imap_host, imap_port) => {
                     category = 'Verifikasi';
                 } else if (subject.includes('ubah email') || subject.includes('update email') || subject.includes('change email')) {
                     category = 'Ubah Email';
+                } else if (subject.includes('reset password') || subject.includes('lupa sandi') || subject.includes('forgot password') || subject.includes('atur ulang sandi') || subject.includes('reset sandi')) {
+                    category = 'Reset Password';
                 }
 
                 if (category) {

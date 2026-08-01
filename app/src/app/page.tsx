@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiMail, FiClock, FiLogOut, FiUser, FiCopy, FiCheck } from "react-icons/fi";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
+import { Button } from "@heroui/react";
 
 type OtpData = {
   id: number;
@@ -83,16 +84,19 @@ export default function Home() {
         {/* Header Section */}
         <div className="flex justify-end gap-3 w-full mb-8 relative z-50">
           <Link href="/profile">
-            <button className="flex items-center gap-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-4 py-2 rounded-full transition-colors font-medium text-sm">
+            <Button radius="full" variant="flat" className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-medium text-sm">
               <FiUser /> Profil
-            </button>
+            </Button>
           </Link>
-          <button 
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-2 rounded-full transition-colors font-medium text-sm"
+          <Button 
+            radius="full"
+            variant="flat"
+            color="danger"
+            onPress={() => signOut({ callbackUrl: "/login" })}
+            className="bg-red-500/10 hover:bg-red-500/20 text-red-500 font-medium text-sm"
           >
             <FiLogOut /> Keluar
-          </button>
+          </Button>
         </div>
 
         <motion.div 
@@ -112,17 +116,18 @@ export default function Home() {
         <div className="flex justify-center mb-10 w-full px-2">
           <div className="flex flex-wrap justify-center bg-neutral-900/80 backdrop-blur-xl border border-white/10 p-1.5 shadow-2xl rounded-2xl md:rounded-full gap-1 w-full md:w-auto">
             {visibleCategories.map((cat) => (
-              <button
+              <Button
                 key={cat}
-                onClick={() => setActiveTab(cat)}
-                className={`whitespace-nowrap px-3 sm:px-4 md:px-6 h-10 md:h-12 text-xs sm:text-sm md:text-base flex-grow md:flex-grow-0 rounded-full font-semibold tracking-wide transition-all duration-300 ${
+                radius="full"
+                onPress={() => setActiveTab(cat)}
+                className={`h-10 md:h-12 font-semibold tracking-wide transition-all duration-300 ${
                   activeTab === cat
                     ? "bg-gradient-to-r from-red-600 to-red-700 shadow-red-500/20 text-white shadow-lg"
-                    : "text-neutral-400 hover:text-white hover:bg-white/5"
+                    : "bg-transparent text-neutral-400 hover:text-white hover:bg-white/5"
                 }`}
               >
                 {cat}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -214,13 +219,15 @@ export default function Home() {
                           <span className={`font-mono font-bold bg-clip-text text-transparent bg-gradient-to-br from-white to-neutral-400 text-center transition-all ${copiedId === otp.id ? 'scale-95 opacity-80' : ''} ${otp.otp_code.length > 8 ? 'text-lg md:text-xl tracking-wide break-all' : 'text-3xl tracking-[0.2em]'}`}>
                             {otp.otp_code}
                           </span>
-                          <button
-                            onClick={() => handleCopy(otp.id, otp.otp_code)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 bg-neutral-800/90 hover:bg-neutral-700 backdrop-blur-md border border-white/10 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-200 text-neutral-300 shadow-xl"
+                          <Button
+                            isIconOnly
+                            variant="flat"
+                            onPress={() => handleCopy(otp.id, otp.otp_code)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-neutral-800/90 hover:bg-neutral-700 backdrop-blur-md border border-white/10 text-neutral-300 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-xl"
                             title="Salin Kode"
                           >
                             {copiedId === otp.id ? <FiCheck className="text-green-500 w-4 h-4" /> : <FiCopy className="w-4 h-4" />}
-                          </button>
+                          </Button>
                         </>
                       )}
                     </div>

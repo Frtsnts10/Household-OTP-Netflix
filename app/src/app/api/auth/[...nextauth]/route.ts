@@ -7,10 +7,11 @@ export const authOptions: AuthOptions = {
       name: "Credentials",
       credentials: {
         username: { label: "Username", type: "text" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        twoFactorToken: { label: "2FA Token", type: "text" }
       },
       async authorize(credentials) {
-        const { username, password } = credentials || {};
+        const { username, password, twoFactorToken } = credentials || {};
         
         if (!username || !password) return null;
 
@@ -21,25 +22,28 @@ export const authOptions: AuthOptions = {
               "Content-Type": "application/json",
               "x-api-key": process.env.BACKEND_API_KEY || ""
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password, twoFactorToken })
           });
 
-          if (res.ok) {
-            const user = await res.json();
-            return { 
-              id: user.id, 
-              name: user.name, 
-              role: user.role, 
-              username: user.username,
-              household_only: user.household_only,
-              preferences: user.preferences
-            };
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error || "Login failed");
           }
-        } catch (error) {
-          console.error("Login error:", error);
-        }
 
-        return null;
+          const user = await res.json();
+          return { 
+            id: user.id, 
+            name: user.name, 
+            role: user.role, 
+            username: user.username,
+            household_only: user.household_only,
+            preferences: user.preferences,
+            two_factor_enabled: user.two_factor_enabled
+          };
+        } catch (error: any) {
+          console.error("Login error:", error);
+          throw new Error(error.message);
+        }
       }
     })
   ],
@@ -54,12 +58,16 @@ export const authOptions: AuthOptions = {
       if (trigger === "update" && session?.preferences) {
         token.preferences = session.preferences;
       }
+      if (trigger === "update" && session?.two_factor_enabled !== undefined) {
+        token.two_factor_enabled = session.two_factor_enabled;
+      }
       if (user) {
         token.role = (user as any).role;
         token.id = (user as any).id;
         token.username = (user as any).username;
         token.household_only = (user as any).household_only;
         token.preferences = (user as any).preferences;
+        token.two_factor_enabled = (user as any).two_factor_enabled;
       }
       return token;
     },
@@ -70,6 +78,7 @@ export const authOptions: AuthOptions = {
         (session.user as any).username = token.username;
         (session.user as any).household_only = token.household_only;
         (session.user as any).preferences = token.preferences;
+        (session.user as any).two_factor_enabled = token.two_factor_enabled;
       }
       return session;
     }

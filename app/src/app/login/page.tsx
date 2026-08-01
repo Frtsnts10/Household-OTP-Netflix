@@ -2,31 +2,51 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-import { FiLock, FiUser } from "react-icons/fi";
-import { motion } from "framer-motion";
+import { FiLock, FiUser, FiShield } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
+import { Input, Button } from "@heroui/react";
+import Link from "next/link";
 
-export default function LoginPage() {
+function LoginContent() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [twoFactorToken, setTwoFactorToken] = useState("");
+  const [show2FA, setShow2FA] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isRegistered = searchParams.get("registered") === "true";
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (e?: React.FormEvent, token?: string) => {
+    if (e) e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    const res = await signIn("credentials", {
+    const payload: any = {
       redirect: false,
       username,
       password,
-    });
+    };
+
+    if (show2FA) {
+      payload.twoFactorToken = token || twoFactorToken;
+    }
+
+    const res = await signIn("credentials", payload);
 
     if (res?.error) {
-      setError("Username atau password salah");
+      if (res.error === "2FA_REQUIRED") {
+        setShow2FA(true);
+        setError(""); // Clear error for step 2
+      } else if (res.error === "INVALID_2FA_CODE") {
+        setError("Kode 2FA tidak valid");
+      } else {
+        setError("Username atau password salah");
+      }
       setIsLoading(false);
     } else {
       router.push("/");
@@ -45,58 +65,129 @@ export default function LoginPage() {
             Netflix OTP Center
           </h1>
           <p className="text-neutral-400">Silakan masuk untuk melanjutkan</p>
+          {isRegistered && !show2FA && (
+            <p className="mt-2 text-green-500 text-sm font-medium">Pendaftaran berhasil! Silakan masuk.</p>
+          )}
         </div>
 
-        <div className="bg-neutral-900/60 border border-white/10 backdrop-blur-xl shadow-lg rounded-2xl">
+        <div className="bg-neutral-900/60 border border-white/10 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden relative">
           <div className="p-8">
             <form onSubmit={handleLogin} className="flex flex-col gap-6">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-neutral-300">Username</label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FiUser className="text-neutral-500 group-hover:text-red-400 transition-colors" />
-                  </div>
-                  <input
-                    type="text"
-                    autoFocus
-                    placeholder="Masukkan username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full bg-neutral-900/50 border border-neutral-700 text-white text-sm rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 block pl-10 p-3 transition-all outline-none hover:border-red-500/50"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-neutral-300">Password</label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FiLock className="text-neutral-500 group-hover:text-red-400 transition-colors" />
-                  </div>
-                  <input
-                    type="password"
-                    placeholder="Masukkan password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-neutral-900/50 border border-neutral-700 text-white text-sm rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 block pl-10 p-3 transition-all outline-none hover:border-red-500/50"
-                  />
-                </div>
-              </div>
+              
+              <AnimatePresence mode="wait">
+                {!show2FA ? (
+                  <motion.div
+                    key="step1"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="flex flex-col gap-6"
+                  >
+                    <Input
+                      autoFocus
+                      isRequired
+                      type="text"
+                      label="Username"
+                      placeholder="Masukkan username"
+                      labelPlacement="outside"
+                      startContent={<FiUser className="text-neutral-500 flex-shrink-0" />}
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      classNames={{
+                        inputWrapper: "bg-neutral-900/50 border-neutral-700 hover:border-red-500/50 focus-within:border-red-500",
+                        input: "text-white",
+                        label: "text-neutral-300 font-medium"
+                      }}
+                    />
+                    
+                    <Input
+                      isRequired
+                      type="password"
+                      label="Password"
+                      placeholder="Masukkan password"
+                      labelPlacement="outside"
+                      startContent={<FiLock className="text-neutral-500 flex-shrink-0" />}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      classNames={{
+                        inputWrapper: "bg-neutral-900/50 border-neutral-700 hover:border-red-500/50 focus-within:border-red-500",
+                        input: "text-white",
+                        label: "text-neutral-300 font-medium"
+                      }}
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="step2"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="flex flex-col gap-6"
+                  >
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-center mb-2">
+                      <FiShield className="text-4xl text-red-500 mx-auto mb-2" />
+                      <p className="text-sm text-red-200">Akun Anda dilindungi oleh 2FA. Masukkan 6-digit kode dari aplikasi Authenticator.</p>
+                    </div>
+
+                    <Input
+                      autoFocus
+                      isRequired
+                      type="text"
+                      label="Kode 2FA"
+                      placeholder="Contoh: 123456"
+                      labelPlacement="outside"
+                      maxLength={6}
+                      startContent={<FiShield className="text-neutral-500 flex-shrink-0" />}
+                      value={twoFactorToken}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setTwoFactorToken(val);
+                        if (val.length === 6) {
+                          handleLogin(undefined, val);
+                        }
+                      }}
+                      classNames={{
+                        inputWrapper: "bg-neutral-900/50 border-neutral-700 hover:border-red-500/50 focus-within:border-red-500",
+                        input: "text-white text-center tracking-[0.5em] font-mono",
+                        label: "text-neutral-300 font-medium"
+                      }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {error && (
                 <p className="text-red-500 text-sm text-center font-medium">{error}</p>
               )}
 
-              <button 
+              <Button 
                 type="submit" 
-                disabled={isLoading}
-                className="w-full font-semibold shadow-lg shadow-red-500/20 mt-2 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center"
+                color="danger"
+                isLoading={isLoading}
+                className="w-full font-semibold shadow-lg shadow-red-500/20 mt-2 py-6 rounded-xl"
               >
-                {isLoading ? "Memproses..." : "Masuk"}
-              </button>
+                {isLoading ? "Memproses..." : show2FA ? "Verifikasi" : "Masuk"}
+              </Button>
+
+              {!show2FA && (
+                <div className="text-center mt-2">
+                  <Link href="/register" className="text-sm text-neutral-400 hover:text-white transition-colors">
+                    Belum punya akun? <span className="text-red-500 hover:underline">Daftar di sini</span>
+                  </Link>
+                </div>
+              )}
             </form>
           </div>
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0a0a]" />}>
+      <LoginContent />
+    </Suspense>
   );
 }

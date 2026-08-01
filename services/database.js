@@ -31,18 +31,22 @@ const db = new sqlite3.Database(dbPath, (err) => {
             username TEXT UNIQUE,
             password TEXT,
             name TEXT,
+            email TEXT,
             role TEXT,
             household_only BOOLEAN DEFAULT 0,
-            preferences TEXT DEFAULT '["Semua", "Household", "Login", "Verifikasi", "Ubah Email"]'
+            preferences TEXT DEFAULT '["Semua", "Household", "Login", "Verifikasi", "Ubah Email"]',
+            two_factor_secret TEXT,
+            two_factor_enabled BOOLEAN DEFAULT 0
         )`, (err) => {
             if (err) {
                 console.error('Error creating table users', err.message);
             } else {
-                // Add household_only column safely to existing table
+                // Add new columns safely to existing table
                 db.run(`ALTER TABLE users ADD COLUMN household_only BOOLEAN DEFAULT 0`, (err) => {});
-                
-                // Add preferences column safely to existing table
                 db.run(`ALTER TABLE users ADD COLUMN preferences TEXT DEFAULT '["Semua", "Household", "Login", "Verifikasi", "Ubah Email"]'`, (err) => {});
+                db.run(`ALTER TABLE users ADD COLUMN email TEXT`, (err) => {});
+                db.run(`ALTER TABLE users ADD COLUMN two_factor_secret TEXT`, (err) => {});
+                db.run(`ALTER TABLE users ADD COLUMN two_factor_enabled BOOLEAN DEFAULT 0`, (err) => {});
                 
                 // Seed users
                 db.get("SELECT count(*) as count FROM users", (err, row) => {
