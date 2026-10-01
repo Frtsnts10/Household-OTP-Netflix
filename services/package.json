@@ -13,7 +13,7 @@
     "dotenv": "^17.4.2",
     "express": "^4.19.2",
     "imapflow": "^1.4.2",
-    "mailparser": "^3.9.11",
+    "mailparser": "^3.9.33",
     "node-cron": "^4.4.1",
     "sqlite3": "^5.1.7"
   }
