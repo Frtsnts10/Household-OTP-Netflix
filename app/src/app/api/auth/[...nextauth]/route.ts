@@ -1,45 +1,72 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-
 export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
         username: { label: "Username", type: "text" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        twoFactorToken: { label: "2FA Token", type: "text" }
       },
       async authorize(credentials) {
-        const { username, password } = credentials || {};
+        const { username, password, twoFactorToken } = credentials || {};
         
         if (!username || !password) return null;
 
         try {
-          const res = await fetch("http://localhost:5001/api/users/login", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-api-key": process.env.BACKEND_API_KEY || ""
-            },
-            body: JSON.stringify({ username, password })
-          });
+          const { adminDb } = await import('@/lib/firebaseAdmin');
+          const bcrypt = await import('bcryptjs');
 
-          if (res.ok) {
-            const user = await res.json();
-            return { 
-              id: user.id, 
-              name: user.name, 
-              role: user.role, 
-              username: user.username,
-              household_only: user.household_only,
-              preferences: user.preferences
-            };
+          const usersRef = adminDb.collection('householdotp_users');
+          const snapshot = await usersRef.where('username', '==', username).get();
+
+          if (snapshot.empty) {
+            throw new Error("Username atau password salah");
           }
-        } catch (error) {
-          console.error("Login error:", error);
-        }
 
-        return null;
+          let userDoc: any = undefined;
+          snapshot.forEach((doc: any) => { userDoc = { id: doc.id, ...doc.data() }; });
+
+          if (!userDoc) {
+            throw new Error("Username atau password salah");
+          }
+
+          const isValid = await bcrypt.compare(password, userDoc.password);
+          if (!isValid) {
+            throw new Error("Username atau password salah");
+          }
+
+          // 2FA Check
+          if (userDoc.two_factor_enabled && userDoc.two_factor_secret) {
+            if (!twoFactorToken) {
+              throw new Error("2FA_REQUIRED");
+            }
+            const speakeasy = await import('speakeasy');
+            const is2faValid = speakeasy.totp.verify({
+                secret: userDoc.two_factor_secret,
+                encoding: 'base32',
+                token: twoFactorToken,
+                window: 1
+            });
+            if (!is2faValid) {
+               throw new Error("Kode 2FA tidak valid");
+            }
+          }
+
+          return { 
+            id: userDoc.id, 
+            name: userDoc.name, 
+            role: userDoc.role, 
+            username: userDoc.username,
+            household_only: userDoc.household_only,
+            preferences: userDoc.preferences,
+            two_factor_enabled: userDoc.two_factor_enabled
+          };
+        } catch (error: any) {
+          console.error("Login error:", error);
+          throw new Error(error.message);
+        }
       }
     })
   ],
@@ -50,9 +77,15 @@ export const authOptions: AuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      return true; // For credentials provider
+    },
     async jwt({ token, user, trigger, session }) {
       if (trigger === "update" && session?.preferences) {
         token.preferences = session.preferences;
+      }
+      if (trigger === "update" && session?.two_factor_enabled !== undefined) {
+        token.two_factor_enabled = session.two_factor_enabled;
       }
       if (user) {
         token.role = (user as any).role;
@@ -60,6 +93,7 @@ export const authOptions: AuthOptions = {
         token.username = (user as any).username;
         token.household_only = (user as any).household_only;
         token.preferences = (user as any).preferences;
+        token.two_factor_enabled = (user as any).two_factor_enabled;
       }
       return token;
     },
@@ -70,6 +104,7 @@ export const authOptions: AuthOptions = {
         (session.user as any).username = token.username;
         (session.user as any).household_only = token.household_only;
         (session.user as any).preferences = token.preferences;
+        (session.user as any).two_factor_enabled = token.two_factor_enabled;
       }
       return session;
     }

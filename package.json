@@ -3,9 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev:app": "npm run dev --prefix app",
-    "dev:services": "npm run dev --prefix services",
+    "dev": "npm run dev --prefix app",
     "build:app": "npm run build --prefix app",
-    "install:all": "npm install --prefix app && npm install --prefix services"
+    "install:all": "npm install && npm install --prefix app"
   }
 }
